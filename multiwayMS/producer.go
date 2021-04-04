@@ -55,47 +55,50 @@ func SendTask(taskQueue rmq.Queue, payload TaskPayload) {
 	taskQueue.PublishBytes(bytes)
 }
 
+func readDataFile(i int) []int{
+	fileHandle, _ := os.Open("data/data" + strconv.Itoa(i) +".txt")
+	defer fileHandle.Close()
+	fileScanner := bufio.NewScanner(fileHandle)
+	var temp []int
+	for fileScanner.Scan() {
+		read_line := fileScanner.Text()
+		read_line = strings.TrimSuffix(read_line, "\n")
+		num, err := strconv.Atoi(read_line)
+		if err != nil{
+			panic(err)
+		}
+		temp = append(temp, num)
+	}
+	sort.Ints(temp)
+	return temp
+}
 
-
-func main() {
-	// testFilesGenerator()
+func openConnAndQueue() rmq.Queue{
 	connection, err := rmq.OpenConnection("producer", "tcp", "localhost:6379", 1, nil)
 	if err != nil {
 		panic(err)
 	}
+
 	taskQueue,err := connection.OpenQueue("num_queue")
 	if err != nil {
 		panic(err)
 	}
 
+	return taskQueue
+}
+
+func main() {
+	taskQueue := openConnAndQueue()
+
 	for i := 1; i <= 10; i++ {
-		
-		fileHandle, _ := os.Open("data/data" + strconv.Itoa(i) +".txt")
-		defer fileHandle.Close()
-		fileScanner := bufio.NewScanner(fileHandle)
-		var temp []int
-		for fileScanner.Scan() {
-			read_line := fileScanner.Text()
-			read_line = strings.TrimSuffix(read_line, "\n")
-			num, err := strconv.Atoi(read_line)
-			if err != nil{
-				panic(err)
-			}
-			temp = append(temp, num)
-		}
-		sort.Ints(temp)
-		
-		fmt.Println("send payload with id: ",i)
-		/*
-		// fmt.Println(temp)
-		SendTask(taskQueue, TaskPayload{i, temp})
-		*/
+		temp := readDataFile(i)
+		// fmt.Println("send payload with id: ",i)
 		var task = TaskPayload{i,temp}
 		taskBytes, err := json.Marshal(task)
 		if err != nil {
 			panic(err)
 		}
-		// fmt.Println(taskBytes)
+
 		err = taskQueue.PublishBytes(taskBytes)
 	}
 	

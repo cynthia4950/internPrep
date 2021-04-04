@@ -1,66 +1,24 @@
-package test
+package main
 
 import (
 	"encoding/json"
 	"testing"
-	. "github.com/agiledragon/gomonkey/v2"
-	"github.com/agiledragon/gomonkey/v2/test/fake"
+	. "github.com/agiledragon/gomonkey"
 	. "github.com/smartystreets/goconvey/convey"
-
-	// "testing"
+	"github.com/adjust/rmq/v3"
 	// "github.com/golang/mock/gomock"
 	// "multiwayMS/mock"
 )
 
-var (
-    outputExpect = "xxx-vethName100-yyy"
-)
-
-
-func Test_Initializer(t *testing.T) {
-    Convey("TestApplyFunc_Initializer", t, func() {
-        Convey("one func for succ", func() {
-			fake_complete := [10]bool
-			for i := 0; i < 10; i++ {
-				fake_complete[i] = false
-			}
-            output1,output2 := initializer()
-            So(output1, ShouldEqual, fake_complete) 
-            So(output2, ShouldEqual, false)
-        })
-
-        
-    })
+func unmarshallPayload_stub(delivery rmq.Delivery) Batch {
+	temp_arr := []int{0,1,2,3}
+	var fake_task_batch = Batch{1,temp_arr}
+	return fake_task_batch
 }
 
-func Test_Consume(t *testing.T) {
-    Convey("TestApplyFunc_Consume", t, func() {
-		var fake_delivery rmq.Delivery
-		var fake_task Batch
-		var fake_allNums [10][100000]int
-		var fake_merge_result [1000000]int
-        patches := ApplyFunc(unmarshallPayload, func(fake_delivery rmq.Delivery) Batch {
-			fake_task.Id = 0
-			fake_task.Nums = {0,1,2,3}
-			return fake_task
-		})//对函数unmarshallPayload打桩
-		defer patches.Reset()
 
-		patches.ApplyFunc(append_payload, func(task Batch) [][]int {
-			return fake_allNums
-		})//对函数append_payload打桩
-		
-		patches.ApplyFunc(mergeTenBatches, func() []int{
-			return fake_merge_result
-		})//对函数mergeTenBatches打桩
-		
-		result := Consume(fake_delivery)
-        So(result, ShouldEqual, fake_merge_result)
-        
-    })
-}
 
-//test the helper functions of consume
+/*
 func Test_UnmarshallPayload(t *testing.T) {
 	var fake_task_batch = consumer.Batch{1,{0,1,2,3}}
 	var fake_task_payload = producer.TaskPayload{1,{0,1,2,3}}
@@ -73,7 +31,18 @@ func Test_UnmarshallPayload(t *testing.T) {
 		t.Error("Nums array in payload doesn't match that of the payload passed in")
 	}
 }
+*/
 
+func appendPayload_stub(task Batch) [][]int {
+	fake_allNums := make([][]int, 10)
+	for i := 0; i < 10; i++ {
+		fake_allNums[i] = make([]int, 100000)
+	}
+
+	return fake_allNums
+}
+
+/*
 func Test_appendPayload(t *testing.T) {
 	var temp_arr [100000]int
 	var fake_task_batch = consumer.Batch{1,temp_arr}
@@ -86,7 +55,15 @@ func Test_appendPayload(t *testing.T) {
 		t.Error("last row of temp_arr is not the array passed in")
 	}
 }
+*/
 
+func mergeTenBatches_stub() []int {
+	// var fake_res [1000000]int
+	fake_res := make([]int, 1000000)
+	return fake_res
+}
+
+/*
 func Test_mergeTenBatches(t *testing.T) {
 	var allNums [10][100000]int
 	var expect_res [1000000]int
@@ -96,3 +73,27 @@ func Test_mergeTenBatches(t *testing.T) {
 	}
 	
 }
+*/
+
+func Test_Consume(t *testing.T) {
+    Convey("TestApplyFunc_Consume", t, func() {
+		
+        patches := ApplyFunc(unmarshallPayload, unmarshallPayload_stub)
+		defer patches.Reset()
+
+		patches.ApplyFunc(append_payload, appendPayload_stub)
+		
+		patches.ApplyFunc(mergeTenBatches, mergeTenBatches_stub)
+		
+		fake_payload_arr := []int{0,1,2,3}
+		fake_task_payload := TaskPayload{1,fake_payload_arr}
+		fake_taskBytes, _ := json.Marshal(fake_task_payload)
+		var fake_merge_result [1000000]int
+
+		result := Consume(fake_taskBytes)
+        So(result, ShouldEqual, fake_merge_result)
+        
+    })
+}
+
+

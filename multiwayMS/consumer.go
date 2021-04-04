@@ -2,9 +2,7 @@ package main
 
 import (
 	"fmt"
-	// "bufio"
 	"os"
-	// "io"
 	"os/signal"
 	"syscall"
 	"time"
@@ -45,24 +43,12 @@ func NewConsumer(tag int) *Consumer {
 	}
 }
 
-/*
-func initializer () ([10]bool, bool){
-	for i := 0; i < 10; i++ {
-		complete[i] = false
-	}
-	// count = 0
-	allComplete = false
-	return complete, allComplete
-}
-*/
-
 func createOutputFile(store **os.File) {
 	temp, err := os.Create("data/output.txt")
 	if err != nil {
 		panic(err)
 	}
 	*store = temp
-	// *store = fileHandle
 }
 
 func findMinNum(complete *[10]bool, allNums *[][]int, indexPtrs *[10]int) (int,int){
@@ -75,11 +61,9 @@ func findMinNum(complete *[10]bool, allNums *[][]int, indexPtrs *[10]int) (int,i
 		}
 		//workingArr is the array we are currently checking it's next number
 		workingArr := (*allNums)[i]
-		// fmt.Println("working arr size: " + strconv.Itoa(len(workingArr)) )
 
 		//workingIndex is the index of the next number we consider to merge
 		workingIndex := (*indexPtrs)[i]
-		// fmt.Println("working index: " + strconv.Itoa(workingIndex) )
 
 		//the next number
 		workingNum := workingArr[workingIndex]
@@ -111,11 +95,6 @@ func checkCompleArr(minArr int, indexPtrs *[10]int, complete *[10]bool, allCompl
 }
 
 func writeToFile(fileHandle *os.File, content int){
-	// fmt.Println("write " + strconv.Itoa(content) + " to file")
-	// _, err := fileHandle.WriteString("test")
-	// if err != nil {
-	// 	panic(err)
-	// }
 	_, err := fileHandle.WriteString(fmt.Sprintf("%d\n", content))
 	if err != nil {
 		panic(err)
@@ -128,78 +107,19 @@ func merge(allNums [][]int) []int{
 	fmt.Println("in merge")
 	
 	var res []int
-	// var workingArr []int
-	// var workingIndex int
-	// var workingNum int
-
-	
-	/*
-	fileHandle, err := os.Create("data/output.txt")
-	if err != nil {
-		panic(err)
-	}
-	defer fileHandle.Close()
-	*/
 	var fileHandle *os.File
 	createOutputFile(&fileHandle)
 	
 	defer fileHandle.Close()
 	// fileWriter := bufio.NewWriter(fileHandle)
-
-
 	
 	// minArr: the index of the array whose number pointed by the pointer is the minimum at this turn
 	// test_count := 0
 	allComplete = false
 	for !allComplete {
-		/*
-		tempMin := maxint32
-		minArr := 0
-		for i := 0; i < numArrays; i++{
-			if complete[i] {
-				// fmt.Println("skip the array at index " + strconv.Itoa(minArr))
-				continue;
-			}
-			//workingArr is the array we are currently checking it's next number
-			workingArr = allNums[i]
-			// fmt.Println("working arr size: " + strconv.Itoa(len(workingArr)) )
-
-			//workingIndex is the index of the next number we consider to merge
-			workingIndex = indexPtrs[i]
-			// fmt.Println("working index: " + strconv.Itoa(workingIndex) )
-
-			//the next number
-			workingNum = workingArr[workingIndex]
-
-			if(workingNum <= tempMin){
-				tempMin = workingNum
-				minArr = i
-			}
-		}
-		*/
 		tempMin, minArr := findMinNum(&complete, &allNums, &indexPtrs)
-
-		/*
-		indexPtrs[minArr]++;
-		if indexPtrs[minArr] >= inputSize {
-			complete[minArr] = true
-			allComplete = true
-			for j := 0; j < numArrays; j++ {
-				if !complete[j] {
-					allComplete = false
-				}
-			}
-		}
-		*/
 		checkCompleArr(minArr, &indexPtrs, &complete, &allComplete)
-
 		res = append(res, tempMin)
-		/*
-		_, err = fileWriter.WriteString(fmt.Sprintf("%d\n", tempMin))
-        if err != nil {
-            fmt.Printf("error writing string: %v", err)
-        }
-		*/
 		writeToFile(fileHandle, tempMin)
 	}
 
@@ -252,7 +172,6 @@ func (consumer *Consumer) Consume(delivery rmq.Delivery) {
 	
 
 }
-
 
 
 func main() {
