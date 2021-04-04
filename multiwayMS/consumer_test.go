@@ -1,14 +1,26 @@
 package main
 
 import (
-	"encoding/json"
-	"testing"
-	. "github.com/agiledragon/gomonkey"
-	. "github.com/smartystreets/goconvey/convey"
+	// "encoding/json"
+	// "testing"
+	// . "github.com/agiledragon/gomonkey"
+	// . "github.com/smartystreets/goconvey/convey"
 	"github.com/adjust/rmq/v3"
-	// "github.com/golang/mock/gomock"
-	// "multiwayMS/mock"
+	"github.com/golang/mock/gomock"
+	"multiwayMS/mock"
 )
+
+func Test_OpenConnAndProcess(t *testing.T) {
+	ctl := gomock.NewController(t)
+	defer ctl.Finish()
+
+	var id int64 = 1
+	mockConsuming := mock.NewMockReceivingManager(ctl)
+	gomock.InOrder(
+		mockConsuming.EXPECT()
+	)
+}
+
 
 func unmarshallPayload_stub(delivery rmq.Delivery) Batch {
 	temp_arr := []int{0,1,2,3}
@@ -71,10 +83,10 @@ func Test_mergeTenBatches(t *testing.T) {
 	if after_merge != expect_res{
 		t.Error("after merge ten empty batches, the result should be an aray of size 10*10w")
 	}
-	
 }
 */
 
+/*
 func Test_Consume(t *testing.T) {
     Convey("TestApplyFunc_Consume", t, func() {
 		
@@ -95,5 +107,5 @@ func Test_Consume(t *testing.T) {
         
     })
 }
-
+*/
 

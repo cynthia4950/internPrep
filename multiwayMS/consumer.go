@@ -22,6 +22,22 @@ const (
 
 )
 
+
+type ReceivingManager interface {
+	OpenConnAndProcess()
+}
+
+type RealReceive struct {
+	port 	string
+}
+
+/*
+type FakeReceive struct {
+	connected, received, consumed bool
+}
+*/
+
+
 type Batch struct {
 	Id     int	`json:"id"`
 	Nums	[]int	`json:"nums"`
@@ -124,7 +140,7 @@ func merge(allNums [][]int) []int{
 	}
 
 
-	fmt.Println("end merge")
+	fmt.Println("end merge: Ten payloads have been consumed")
 	return res
 	
 }
@@ -173,38 +189,31 @@ func (consumer *Consumer) Consume(delivery rmq.Delivery) {
 
 }
 
-
-func main() {
-	// fmt.Println("in comsumer main")
+func (consumer_real *RealReceive) OpenConnAndProcess(){
 	errChan := make(chan error, 10)
 	// go logErrors(errChan)
 
-	connection, err := rmq.OpenConnection("consumer", "tcp", "localhost:6379", 1, errChan)
+	connection, err := rmq.OpenConnection("consumer", "tcp", consumer_real.port, 1, errChan)
 	// defer connection.Close()
 	if err != nil {
 		panic(err)
 	}
-	// fmt.Println("in comsumer main, after connection")
-
 
 	queue, err := connection.OpenQueue("num_queue")
 	if err != nil {
 		panic(err)
 	}
-	// fmt.Println("in comsumer main, after open queue")
-
 
 	if err := queue.StartConsuming(prefetchLimit, pollDuration); err != nil {
 		panic(err)
 	}
 
-	// for i := 0; i < numConsumers; i++ {
-		fmt.Println("create consumer with id: " + strconv.Itoa(0))
+	fmt.Println("create consumer with id: " + strconv.Itoa(0))
+
+	if _, err := queue.AddConsumer("consumer", NewConsumer(0)); err != nil {
+		panic(err)
+	}
 	
-		if _, err := queue.AddConsumer("consumer", NewConsumer(0)); err != nil {
-			panic(err)
-		}
-	// }
 	fmt.Println("in comsumer main, after add consumer")
 	
 	
@@ -217,7 +226,15 @@ func main() {
 		<-signals // hard exit on second signal (in case shutdown gets stuck)
 		os.Exit(1)
 	}()
+	// queue.StopConsuming()
 	<-connection.StopAllConsuming() // wait for all Consume() calls to finish
 	
+}
 
+
+
+func main() {
+	// fmt.Println("in comsumer main")
+	consumer_real := RealReceive{"localhost:6379"}
+	consumer_real.OpenConnAndProcess()
 }
