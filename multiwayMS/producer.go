@@ -65,17 +65,6 @@ func testFilesGenerator(){
 }
 
 
-/*
-func (producer_real *RealSend) SendTask(taskQueue rmq.Queue, payload TaskPayload) {
-	bytes, err := json.Marshal(payload)
-	if err != nil {
-		println(err)
-		return
-	}
-	taskQueue.PublishBytes(bytes)
-}
-*/
-
 func readDataFile(i int) []int{
 	fileHandle, _ := os.Open("data/data" + strconv.Itoa(i) +".txt")
 	defer fileHandle.Close()
@@ -94,6 +83,7 @@ func readDataFile(i int) []int{
 	return temp
 }
 
+
 func (producer_real *RealSend) OpenConnAndQueue_Send() rmq.Queue{
 	connection, err := rmq.OpenConnection("producer", "tcp", "localhost:6379", 1, nil)
 	if err != nil {
@@ -108,6 +98,7 @@ func (producer_real *RealSend) OpenConnAndQueue_Send() rmq.Queue{
 	return taskQueue
 }
 
+
 func (producer_real *RealSend) SendPayload(taskQueue rmq.Queue, i int){
 	temp := readDataFile(i)
 	// fmt.Println("send payload with id: ",i)
@@ -119,6 +110,7 @@ func (producer_real *RealSend) SendPayload(taskQueue rmq.Queue, i int){
 
 	err = taskQueue.PublishBytes(taskBytes)
 }
+
 
 func main() {
 	producer_real := RealSend{"localhost:6379"}
