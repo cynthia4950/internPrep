@@ -48,8 +48,8 @@ type Consumer struct {
 }
 
 var allNums [][]int
-var indexPtrs [10]int
-var complete [10]bool
+var indexPtrs []int
+var complete []bool
 var allComplete bool
 
 
@@ -59,18 +59,19 @@ func NewConsumer(tag int) *Consumer {
 	}
 }
 
-func createOutputFile(store **os.File) {
+func createOutputFile(store **os.File) bool{
 	temp, err := os.Create("data/output.txt")
 	if err != nil {
 		panic(err)
 	}
 	*store = temp
+	return true
 }
 
-func findMinNum(complete *[10]bool, allNums *[][]int, indexPtrs *[10]int) (int,int){
+func findMinNum(complete *[]bool, allNums *[][]int, indexPtrs *[]int, row_size int) (int,int){
 	tempMin := maxint32
 	minArr := 0
-	for i := 0; i < numArrays; i++{
+	for i := 0; i < row_size; i++{
 		if (*complete)[i] {
 			// fmt.Println("skip the array at index " + strconv.Itoa(minArr))
 			continue;
@@ -93,16 +94,16 @@ func findMinNum(complete *[10]bool, allNums *[][]int, indexPtrs *[10]int) (int,i
 	return tempMin, minArr
 }
 
-func checkCompleArr(minArr int, indexPtrs *[10]int, complete *[10]bool, allComplete *bool){
+func checkCompleArr(minArr int, colSize int, indexPtrs *[]int, complete *[]bool, allComplete *bool){
 	//minArr is the index of the array whose number being selected is the minunum
 	//complete is an aray of boolean marking which array has been finished
 	//allComplete mark if all arrays are finished
 
 	(*indexPtrs)[minArr]++;
-	if (*indexPtrs)[minArr] >= inputSize {
+	if (*indexPtrs)[minArr] >= colSize {
 		(*complete)[minArr] = true
 		*allComplete = true
-		for j := 0; j < numArrays; j++ {
+		for j := 0; j < len(*complete); j++ {
 			if !(*complete)[j] {
 				*allComplete = false
 			}
@@ -110,12 +111,12 @@ func checkCompleArr(minArr int, indexPtrs *[10]int, complete *[10]bool, allCompl
 	}
 }
 
-func writeToFile(fileHandle *os.File, content int){
+func writeToFile(fileHandle *os.File, content int) bool{
 	_, err := fileHandle.WriteString(fmt.Sprintf("%d\n", content))
 	if err != nil {
 		panic(err)
 	}
-
+	return true
 }
 
 
@@ -124,17 +125,17 @@ func merge(allNums [][]int) []int{
 	
 	var res []int
 	var fileHandle *os.File
-	createOutputFile(&fileHandle)
-	
-	defer fileHandle.Close()
-	// fileWriter := bufio.NewWriter(fileHandle)
+	createSuccess := createOutputFile(&fileHandle)
+	if createSuccess{
+		defer fileHandle.Close()
+	}
 	
 	// minArr: the index of the array whose number pointed by the pointer is the minimum at this turn
 	// test_count := 0
 	allComplete = false
 	for !allComplete {
-		tempMin, minArr := findMinNum(&complete, &allNums, &indexPtrs)
-		checkCompleArr(minArr, &indexPtrs, &complete, &allComplete)
+		tempMin, minArr := findMinNum(&complete, &allNums, &indexPtrs, numArrays)
+		checkCompleArr(minArr, inputSize, &indexPtrs, &complete, &allComplete)
 		res = append(res, tempMin)
 		writeToFile(fileHandle, tempMin)
 	}
@@ -157,9 +158,9 @@ func unmarshallPayload(delivery rmq.Delivery) Batch {
 	return task
 }
 
-func append_payload(task Batch) [][]int{
-	allNums = append(allNums,task.Nums)
-	return allNums
+func append_payload(task Batch, original *[][]int) [][]int{
+	*original = append(*original,task.Nums)
+	return *original
 }
 
 func mergeTenBatches() []int{
@@ -176,7 +177,7 @@ func (consumer *Consumer) Consume(delivery rmq.Delivery) {
 
 	// fmt.Println("task.id: " + strconv.Itoa(task.Id)) 
 	// fmt.Println("task.Nums size: " + strconv.Itoa(len(task.Nums)))
-	append_payload(task)
+	append_payload(task, &allNums)
 
     // perform task
     if err := delivery.Ack(); err != nil {
@@ -235,6 +236,8 @@ func (consumer_real *RealReceive) OpenConnAndProcess(){
 
 func main() {
 	// fmt.Println("in comsumer main")
+	indexPtrs = make([]int, 10)
+	complete = make([]bool, 10)
 	consumer_real := RealReceive{"localhost:6379"}
 	consumer_real.OpenConnAndProcess()
 }
