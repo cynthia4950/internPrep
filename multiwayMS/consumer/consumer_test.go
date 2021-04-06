@@ -1,8 +1,8 @@
 package main
 
 import (
-	// "encoding/json"
 	"testing"
+
 	// "reflect"
 	// "fmt"
 	// . "github.com/agiledragon/gomonkey"
@@ -27,36 +27,8 @@ func Test_OpenConnAndProcess(t *testing.T) {
 */
 
 /*
-func unmarshallPayload_stub(delivery rmq.Delivery) Batch {
-	temp_arr := []int{0,1,2,3}
-	var fake_task_batch = Batch{1,temp_arr}
-	return fake_task_batch
-}
-*/
-
-/*
-func Test_marshallANDunmarshall(t *testing.T) {
-	var fake_task_batch = Batch{1,{0,1,2,3}}
-	var fake_task_payload = TaskPayload{1,{0,1,2,3}}
-	fake_taskBytes, _ := json.Marshal(fake_task_payload)
-	result := unmarshallPayload(fake_taskBytes)
-	if fake_task_batch.Id != result.Id{
-		t.Error("Id in payload doesn't match that of the payload passed in")
-	}
-	if fake_task_batch.Nums != result.Nums{
-		t.Error("Nums array in payload doesn't match that of the payload passed in")
-	}
-}
-*/
-
-/*
-func appendPayload_stub(task Batch) [][]int {
-	fake_allNums := make([][]int, 10)
-	for i := 0; i < 10; i++ {
-		fake_allNums[i] = make([]int, 100000)
-	}
-
-	return fake_allNums
+func Test_unmarshallPayload(t *testing.T) {
+	//cannot test
 }
 */
 
@@ -179,58 +151,19 @@ func Test_checkCompleArr(t *testing.T) {
 
 /*
 func Test_merge(t *testing.T) {
-	output_expect := []int {0,1,2,3,4,5,6,7,8,9}
-	fake_allNums := [][]int {{0,1},{4,5},{2,7},{9,3},{6,8}}
-	fake_complete := make([]bool, 10) // All false
-	fake_indexPtrs := make([]int, 10) // All 0
-	output_real := merge(fake_complete, fake_allNums, fake_indexPtrs)
-	if reflect.DeepEqual(output_real, output_expect) {
-		t.Error("fail to merge values in the 2d array")
-	}
-}
-*/
-
-
-/*
-func mergeTenBatches_stub() []int {
-	// var fake_res [1000000]int
-	fake_res := make([]int, 1000000)
-	return fake_res
+	//test with gomonkey
 }
 */
 
 /*
 func Test_mergeTenBatches(t *testing.T) {
-	var allNums [10][100000]int
-	var expect_res [1000000]int
-	after_merge := mergeTenBatches()
-	if after_merge != expect_res{
-		t.Error("after merge ten empty batches, the result should be an aray of size 10*10w")
-	}
+	//test with gomonkey, convey merge
 }
 */
 
 /*
 func Test_Consume(t *testing.T) {
-	NewConsumer(0)
-    Convey("TestApplyFunc_Consume", t, func() {
-		
-        patches := ApplyFunc(unmarshallPayload, unmarshallPayload_stub)
-		defer patches.Reset()
-
-		patches.ApplyFunc(append_payload, appendPayload_stub)
-		
-		patches.ApplyFunc(mergeTenBatches, mergeTenBatches_stub)
-		
-		fake_payload_arr := []int{0,1,2,3}
-		fake_task_payload := TaskPayload{1,fake_payload_arr}
-		fake_taskBytes, _ := json.Marshal(fake_task_payload)
-		var fake_merge_result [1000000]int
-
-		result := Consume(fake_taskBytes)
-        So(result, ShouldEqual, fake_merge_result)
-        
-    })
+	//test with gomonkey to check Consume() enters three helper functions
 }
 */
 
