@@ -8,7 +8,7 @@ import (
 	"os"
 	. "github.com/agiledragon/gomonkey"
 	. "github.com/smartystreets/goconvey/convey"
-	"github.com/adjust/rmq/v3"
+	// "github.com/adjust/rmq/v3"
 	// "github.com/golang/mock/gomock"
 	// "multiwayMS/mock"
 	// "strconv"

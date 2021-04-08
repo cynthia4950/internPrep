@@ -42,15 +42,17 @@ type TaskPayload struct {
 
 
 
-func testFilesGenerator(){
+func testFilesGenerator() bool{
 	// generate test files
+	errorOccurs := false
 	for j := 0; j < 11; j++ {
 		rand.Seed(time.Now().UnixNano())
-		fileName := "data" + strconv.Itoa(j) + ".txt"
+		fileName := "../data/data" + strconv.Itoa(j) + ".txt"
 		fmt.Println(fileName)
 		f, err := os.Create(fileName)
 
 		if err != nil {
+			errorOccurs = true
 			panic(err)
 		}
 
@@ -62,11 +64,12 @@ func testFilesGenerator(){
 
 		fmt.Println("done")
 	}
+	return errorOccurs
 }
 
 
-func readDataFile(i int) []int{
-	fileHandle, _ := os.Open("data/data" + strconv.Itoa(i) +".txt")
+func readDataFile(fileName string) []int{
+	fileHandle, _ := os.Open(fileName)
 	defer fileHandle.Close()
 	fileScanner := bufio.NewScanner(fileHandle)
 	var temp []int
@@ -100,7 +103,8 @@ func (producer_real *RealSend) OpenConnAndQueue_Send() rmq.Queue{
 
 
 func (producer_real *RealSend) SendPayload(taskQueue rmq.Queue, i int){
-	temp := readDataFile(i)
+	fileName := "data/data" + strconv.Itoa(i) +".txt"
+	temp := readDataFile(fileName)
 	// fmt.Println("send payload with id: ",i)
 	var task = TaskPayload{i,temp}
 	taskBytes, err := json.Marshal(task)
