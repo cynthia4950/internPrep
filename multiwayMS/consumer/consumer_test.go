@@ -5,13 +5,22 @@ import (
 
 	// "reflect"
 	// "fmt"
-	// . "github.com/agiledragon/gomonkey"
-	// . "github.com/smartystreets/goconvey/convey"
-	// "github.com/adjust/rmq/v3"
+	"os"
+	. "github.com/agiledragon/gomonkey"
+	. "github.com/smartystreets/goconvey/convey"
+	"github.com/adjust/rmq/v3"
 	// "github.com/golang/mock/gomock"
 	// "multiwayMS/mock"
 	// "strconv"
 )
+
+/*
+mockgen -source=./consumer/consumer.go -destination=./mock/consumer_mock.go -package=mock
+check coverage:
+go test -coverprofile=coverage.out
+go tool cover -func=coverage.out
+go tool cover -html=coverage.out
+*/
 
 /*
 func Test_OpenConnAndProcess(t *testing.T) {
@@ -25,6 +34,25 @@ func Test_OpenConnAndProcess(t *testing.T) {
 	)
 }
 */
+
+func Test_NewConsumer(t *testing.T) {
+	Convey("TestApplyFunc", t, func() {
+        Convey("Test new consumer", func() {
+			output_real := NewConsumer(17)
+			So(output_real.id, ShouldEqual, 17)
+		})
+	})	
+}
+
+func Test_createOutputFile(t *testing.T) {
+	Convey("TestApplyFunc", t, func() {
+        Convey("Test createOutputFile", func() {
+			var fake_fileHandle *os.File
+			output_real := createOutputFile(&fake_fileHandle, "../data/output.txt")
+			So(output_real, ShouldEqual, true)
+		})
+	})	
+}
 
 /*
 func Test_unmarshallPayload(t *testing.T) {
@@ -61,7 +89,7 @@ func Test_appendPayload(t *testing.T) {
 		}
 	}
 	
-	//question: why slice comparison fail for the following case?
+	//Question: why slice comparison fail for the following case?
 	/*
 	last_row := fake_allNums[len(fake_allNums)-1]
 	if reflect.DeepEqual(last_row, temp_arr){
@@ -149,21 +177,127 @@ func Test_checkCompleArr(t *testing.T) {
 
 }
 
-/*
+
 func Test_merge(t *testing.T) {
-	//test with gomonkey
-}
-*/
+    Convey("TestApplyFunc", t, func() {
+        Convey("Test merge", func() {
+			fake_complete := make([]bool, 3)
+			var fake_allNums [][]int
+			temp1 := []int{4,7}
+			temp2 := []int{1,5}
+			temp3 := []int{8,9}
+			fake_allNums = append(fake_allNums,temp1)
+			fake_allNums = append(fake_allNums,temp2)
+			fake_allNums = append(fake_allNums,temp3)
+            fake_indexPtrs := make([]int, 3)
+			fake_numArrays := 3
+			fake_inputSize  := 2
 
-/*
+			output_expect := []int{1,4,5,7,8,9}
+			patches := ApplyFunc(createOutputFile, func(_ **os.File, _ string) bool {
+                return true
+            })
+            defer patches.Reset()
+			
+			/*
+			findMin_outputs := []OutputCell{
+                {Values: Params{1, 1}},
+                {Values: Params{4, 0}},
+                {Values: Params{5, 1}},
+				{Values: Params{7, 0}},
+                {Values: Params{8, 2}},
+                {Values: Params{9, 2}},
+            }
+			patches := ApplyFuncSeq(findMinNum, findMin_outputs)
+			defer patches.Reset()
+
+			checkCompleArr_outputs := []OutputCell{
+                {Values: Params{false}},
+                {Values: Params{false}},
+                {Values: Params{false}},
+				{Values: Params{false}},
+                {Values: Params{false}},
+                {Values: Params{true}},
+            }
+			
+			patches = ApplyFuncSeq(checkCompleArr, checkCompleArr_outputs)
+			*/
+
+			output_real := merge(fake_complete, fake_allNums, fake_indexPtrs, fake_numArrays, fake_inputSize)
+
+			So(len(output_real), ShouldEqual, len(output_expect))
+			for i := 0; i < len(output_real); i++ {
+				So(output_real[i], ShouldEqual, output_expect[i])
+			}
+        })
+    })
+}
+
+
+
 func Test_mergeTenBatches(t *testing.T) {
-	//test with gomonkey, convey merge
+	Convey("TestApplyFunc", t, func() {
+		
+        Convey("Test mergeTenBatches", func() {
+			output_expect := []int{1,4,5,7,8,9}
+			patches := ApplyFunc(merge, func(_ []bool, _ [][]int, _ []int, _ int, _ int) []int {
+                return output_expect
+            })
+            defer patches.Reset()
+
+			var fake_allNums [][]int
+			temp1 := []int{4,7}
+			temp2 := []int{1,5}
+			temp3 := []int{8,9}
+			fake_allNums = append(fake_allNums,temp1)
+			fake_allNums = append(fake_allNums,temp2)
+			fake_allNums = append(fake_allNums,temp3)
+
+			fake_numArrays := 3
+
+			output_real := mergeTenBatches(fake_allNums, fake_numArrays)
+
+			So(len(output_real), ShouldEqual, len(output_expect))
+			for i := 0; i < len(output_real); i++ {
+				So(output_real[i], ShouldEqual, output_expect[i])
+			}
+		})
+	})
+}
+
+
+/*
+func Test_unmarshallPayload(t *testing.T) {
+	Convey("TestApplyFunc", t, func() {
+        Convey("Test unmarshallPayload", func() {
+			test_data := []byte(`
+					{
+						"Id": 18,
+						"Nums": [
+							0,
+							3,
+						]
+					}
+				`)
+			var fake_delivery rmq.Delivery
+			fake_delivery.payloads = test_data
+			output_real := unmarshallPayload(fake_delivery)
+			So(output_real.Id, ShouldEqual, 18)
+			So(len(output_real.Nums), ShouldEqual, 2)
+			output_expect := []int{0,3}
+			for i := 0; i < len(output_real); i++ {
+				So(output_real[i], ShouldEqual, output_expect[i])
+			}
+
+		})
+	})
 }
 */
 
 /*
-func Test_Consume(t *testing.T) {
-	//test with gomonkey to check Consume() enters three helper functions
+func Test_OpenConnAndProcess(t *testing.T) {
+	
 }
 */
+
 

@@ -59,8 +59,8 @@ func NewConsumer(tag int) *Consumer {
 	}
 }
 
-func createOutputFile(store **os.File) bool{
-	temp, err := os.Create("data/output.txt")
+func createOutputFile(store **os.File, fileName string) bool{
+	temp, err := os.Create(fileName)
 	if err != nil {
 		panic(err)
 	}
@@ -94,7 +94,7 @@ func findMinNum(complete *[]bool, allNums *[][]int, indexPtrs *[]int, row_size i
 	return tempMin, minArr
 }
 
-func checkCompleArr(minArr int, colSize int, indexPtrs *[]int, complete *[]bool, allComplete *bool){
+func checkCompleArr(minArr int, colSize int, indexPtrs *[]int, complete *[]bool, allComplete *bool) bool{
 	//minArr is the index of the array whose number being selected is the minunum
 	//complete is an aray of boolean marking which array has been finished
 	//allComplete mark if all arrays are finished
@@ -109,26 +109,30 @@ func checkCompleArr(minArr int, colSize int, indexPtrs *[]int, complete *[]bool,
 			}
 		}
 	}
+
+	return *allComplete
 }
 
 func writeToFile(fileHandle *os.File, content int) bool{
 	_, err := fileHandle.WriteString(fmt.Sprintf("%d\n", content))
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 	}
 	return true
 }
 
 
-func merge(allNums [][]int) []int{
+func merge(complete []bool, allNums [][]int, indexPtrs []int, numArrays int, inputSize int) []int{
 	fmt.Println("in merge")
 	
 	var res []int
 	var fileHandle *os.File
-	createSuccess := createOutputFile(&fileHandle)
+	// var fileHandle *os.File
+	createSuccess := createOutputFile(&fileHandle, "data/output.txt")
 	if createSuccess{
 		defer fileHandle.Close()
 	}
+		
 	
 	// minArr: the index of the array whose number pointed by the pointer is the minimum at this turn
 	// test_count := 0
@@ -163,10 +167,10 @@ func append_payload(task Batch, original *[][]int) [][]int{
 	return *original
 }
 
-func mergeTenBatches() []int{
+func mergeTenBatches(allNums[][]int, numArrays int) []int{
 	var res []int
 	if len(allNums) == numArrays {
-		res = merge(allNums)
+		res = merge(complete, allNums, indexPtrs, numArrays, inputSize)
 	}
 	return res
 }
@@ -185,7 +189,7 @@ func (consumer *Consumer) Consume(delivery rmq.Delivery) {
 		fmt.Println(err)
     }
 
-	mergeTenBatches()
+	mergeTenBatches(allNums,numArrays)
 	
 
 }
