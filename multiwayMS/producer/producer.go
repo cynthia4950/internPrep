@@ -20,7 +20,7 @@ const(
 
 type SendingManager interface {
 	OpenConnAndQueue_Send()rmq.Queue
-	SendPayload(rmq.Queue, int)
+	SendPayload(rmq.Queue, int) error
 }
 
 type RealSend struct {
@@ -87,41 +87,54 @@ func readDataFile(fileName string) []int{
 }
 
 
-func (producer_real *RealSend) OpenConnAndQueue_Send() rmq.Queue{
+func (producer_real *RealSend) OpenConnAndQueue_Send() (rmq.Queue, error){
 	connection, err := rmq.OpenConnection("producer", "tcp", "localhost:6379", 1, nil)
 	if err != nil {
-		panic(err)
+		// panic(err)
+		var emptyQueue rmq.Queue
+		return emptyQueue, err
 	}
 
 	taskQueue,err := connection.OpenQueue("num_queue")
 	if err != nil {
-		panic(err)
+		// panic(err)
+		var emptyQueue rmq.Queue
+		return emptyQueue, err
 	}
 
-	return taskQueue
+	return taskQueue, nil
 }
 
 
-func (producer_real *RealSend) SendPayload(taskQueue rmq.Queue, i int){
-	fileName := "data/data" + strconv.Itoa(i) +".txt"
+func getContent(payloadId int,fileName string) []byte{
 	temp := readDataFile(fileName)
-	// fmt.Println("send payload with id: ",i)
-	var task = TaskPayload{i,temp}
+	// fmt.Println("get payload whose id is: ",i)
+	// fmt.Println(temp)
+	var task = TaskPayload{payloadId,temp}
 	taskBytes, err := json.Marshal(task)
 	if err != nil {
 		panic(err)
 	}
-
-	err = taskQueue.PublishBytes(taskBytes)
+	return taskBytes
 }
+
+func (producer_real *RealSend) SendPayload(taskQueue rmq.Queue, taskBytes []byte) error{
+	err := taskQueue.PublishBytes(taskBytes)
+	return err
+}
+
 
 
 func main() {
 	producer_real := RealSend{"localhost:6379"}
-	taskQueue := producer_real.OpenConnAndQueue_Send()
+	taskQueue,_ := producer_real.OpenConnAndQueue_Send()
 
 	for i := 1; i <= 10; i++ {
-		producer_real.SendPayload(taskQueue,i)
+		taskBytes := getContent(i, "data/data" + strconv.Itoa(i) +".txt")
+		err := producer_real.SendPayload(taskQueue, taskBytes)
+		if err != nil {
+			panic(err)
+		}
 	}
 	
 }

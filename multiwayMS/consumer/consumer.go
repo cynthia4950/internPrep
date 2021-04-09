@@ -47,6 +47,11 @@ type Consumer struct {
 	id  int
 }
 
+type fakeConsumer struct {
+	id  int
+	fake bool
+}
+
 var allNums [][]int
 var indexPtrs []int
 var complete []bool
@@ -55,6 +60,12 @@ var allComplete bool
 
 func NewConsumer(tag int) *Consumer {
 	return &Consumer{
+		id: 	tag,
+	}
+}
+
+func NewFakeConsumer(tag int) *fakeConsumer {
+	return &fakeConsumer{
 		id: 	tag,
 	}
 }
@@ -78,9 +89,11 @@ func findMinNum(complete *[]bool, allNums *[][]int, indexPtrs *[]int, row_size i
 		}
 		//workingArr is the array we are currently checking it's next number
 		workingArr := (*allNums)[i]
+		// fmt.Println("lenth of workingArr:" + strconv.Itoa(len(workingArr)))
 
 		//workingIndex is the index of the next number we consider to merge
 		workingIndex := (*indexPtrs)[i]
+		// fmt.Println("working index" + strconv.Itoa(workingIndex))
 
 		//the next number
 		workingNum := workingArr[workingIndex]
@@ -190,8 +203,17 @@ func (consumer *Consumer) Consume(delivery rmq.Delivery) {
     }
 
 	mergeTenBatches(allNums,numArrays)
-	
+}
 
+func (consumer *fakeConsumer) Consume(delivery rmq.Delivery, fake_allNums *[][]int, fake_numArrays *int) {
+	// fmt.Println("In Comsume(), id: " + strconv.Itoa(consumer.id))
+	task := unmarshallPayload(delivery)
+
+	// fmt.Println("task.id: " + strconv.Itoa(task.Id)) 
+	// fmt.Println("task.Nums size: " + strconv.Itoa(len(task.Nums)))
+	append_payload(task, fake_allNums)
+
+	mergeTenBatches(*fake_allNums,*fake_numArrays)
 }
 
 func (consumer_real *RealReceive) OpenConnAndProcess(){

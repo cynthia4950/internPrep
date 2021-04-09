@@ -4,14 +4,14 @@ import (
 	"testing"
 
 	// "reflect"
-	// "fmt"
+	"fmt"
 	"os"
 	. "github.com/agiledragon/gomonkey"
 	. "github.com/smartystreets/goconvey/convey"
-	// "github.com/adjust/rmq/v3"
+	"github.com/adjust/rmq/v3"
+	// "encoding/json"
 	// "github.com/golang/mock/gomock"
 	// "multiwayMS/mock"
-	// "strconv"
 )
 
 /*
@@ -54,11 +54,54 @@ func Test_createOutputFile(t *testing.T) {
 	})	
 }
 
+
 /*
 func Test_unmarshallPayload(t *testing.T) {
-	//cannot test
+	Convey("TestApplyFunc", t, func() {
+        Convey("Test unmarshallPayload", func() {
+			data99Content := []int {1,2,3,4,6,7,9}
+			fake_task := Batch{99,data99Content}
+			marshalled_task,_ := json.Marshal(fake_task)
+
+			var fake_delivery rmq.Delivery
+			fake_delivery.payload = marshalled_task
+
+			output_real_batch := unmarshallPayload(fake_delivery)
+
+
+			So(output_real_batch.Id, ShouldEqual, 99)
+			So(len(output_real_batch.Nums), ShouldEqual, len(data99Content))
+			for i := 0; i < len(output_real_batch.Nums); i++ {
+				So(output_real_batch.Nums[i], ShouldEqual, data99Content[i])
+			}
+		})
+	})	
 }
 */
+
+func Test_Consume(t *testing.T) {
+	temp_consumer := NewFakeConsumer(99)
+	var fake_delivery rmq.Delivery
+	patch := ApplyFunc(unmarshallPayload, func(_ rmq.Delivery) Batch {
+		var temp_Batch Batch
+		temp_Batch.Id = 99
+		temp_Batch.Nums = []int{1,4,5,7,8,9}
+		return temp_Batch
+	})
+	defer patch.Reset()
+	//fmt.Println(GetDouble(2))
+	Convey("test Consume", t, func() {
+		fake_allNums := [][]int{}
+		fake_numArrays := 10
+		temp_consumer.Consume(fake_delivery, &fake_allNums, &fake_numArrays)
+		So(len(fake_allNums), ShouldEqual,1)
+		if numArrays != 0 {
+			fmt.Println("won't happen")
+		}
+	})
+}
+
+
 
 
 
@@ -154,6 +197,7 @@ func Test_checkCompleArr(t *testing.T) {
 	fake_indexPtrs := make([]int, 2)
 	fake_complete := make([]bool, 2)
 	fake_allComplete := false
+
 	checkCompleArr(0, 2, &fake_indexPtrs, &fake_complete, &fake_allComplete)
 	if !(fake_complete[0] == false && fake_allComplete == false) {
 		t.Error("call 0: fail to update array completion indicators")
@@ -198,30 +242,6 @@ func Test_merge(t *testing.T) {
                 return true
             })
             defer patches.Reset()
-			
-			/*
-			findMin_outputs := []OutputCell{
-                {Values: Params{1, 1}},
-                {Values: Params{4, 0}},
-                {Values: Params{5, 1}},
-				{Values: Params{7, 0}},
-                {Values: Params{8, 2}},
-                {Values: Params{9, 2}},
-            }
-			patches := ApplyFuncSeq(findMinNum, findMin_outputs)
-			defer patches.Reset()
-
-			checkCompleArr_outputs := []OutputCell{
-                {Values: Params{false}},
-                {Values: Params{false}},
-                {Values: Params{false}},
-				{Values: Params{false}},
-                {Values: Params{false}},
-                {Values: Params{true}},
-            }
-			
-			patches = ApplyFuncSeq(checkCompleArr, checkCompleArr_outputs)
-			*/
 
 			output_real := merge(fake_complete, fake_allNums, fake_indexPtrs, fake_numArrays, fake_inputSize)
 
@@ -266,33 +286,6 @@ func Test_mergeTenBatches(t *testing.T) {
 }
 
 
-/*
-func Test_unmarshallPayload(t *testing.T) {
-	Convey("TestApplyFunc", t, func() {
-        Convey("Test unmarshallPayload", func() {
-			test_data := []byte(`
-					{
-						"Id": 18,
-						"Nums": [
-							0,
-							3,
-						]
-					}
-				`)
-			var fake_delivery rmq.Delivery
-			fake_delivery.payloads = test_data
-			output_real := unmarshallPayload(fake_delivery)
-			So(output_real.Id, ShouldEqual, 18)
-			So(len(output_real.Nums), ShouldEqual, 2)
-			output_expect := []int{0,3}
-			for i := 0; i < len(output_real); i++ {
-				So(output_real[i], ShouldEqual, output_expect[i])
-			}
-
-		})
-	})
-}
-*/
 
 /*
 func Test_OpenConnAndProcess(t *testing.T) {

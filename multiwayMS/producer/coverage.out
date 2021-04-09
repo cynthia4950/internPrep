@@ -1,0 +1,25 @@
+mode: set
+multiwayMS/producer/producer.go:45.31,48.26 2 1
+multiwayMS/producer/producer.go:67.2,67.20 1 1
+multiwayMS/producer/producer.go:48.26,54.17 5 1
+multiwayMS/producer/producer.go:59.3,60.31 2 1
+multiwayMS/producer/producer.go:65.3,65.22 1 1
+multiwayMS/producer/producer.go:54.17,56.14 2 0
+multiwayMS/producer/producer.go:60.31,63.4 2 1
+multiwayMS/producer/producer.go:71.41,76.25 5 1
+multiwayMS/producer/producer.go:85.2,86.13 2 1
+multiwayMS/producer/producer.go:76.25,80.16 4 1
+multiwayMS/producer/producer.go:83.3,83.27 1 1
+multiwayMS/producer/producer.go:80.16,81.14 1 0
+multiwayMS/producer/producer.go:90.74,92.16 2 1
+multiwayMS/producer/producer.go:98.2,99.16 2 1
+multiwayMS/producer/producer.go:105.2,105.23 1 1
+multiwayMS/producer/producer.go:92.16,96.3 2 0
+multiwayMS/producer/producer.go:99.16,103.3 2 0
+multiwayMS/producer/producer.go:109.54,115.16 5 1
+multiwayMS/producer/producer.go:118.2,118.18 1 1
+multiwayMS/producer/producer.go:115.16,116.13 1 0
+multiwayMS/producer/producer.go:121.88,124.2 2 0
+multiwayMS/producer/producer.go:128.13,132.27 3 0
+multiwayMS/producer/producer.go:132.27,135.17 3 0
+multiwayMS/producer/producer.go:135.17,136.14 1 0
