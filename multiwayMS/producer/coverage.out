@@ -16,7 +16,7 @@ multiwayMS/producer/producer.go:98.2,99.16 2 1
 multiwayMS/producer/producer.go:105.2,105.23 1 1
 multiwayMS/producer/producer.go:92.16,96.3 2 0
 multiwayMS/producer/producer.go:99.16,103.3 2 0
-multiwayMS/producer/producer.go:109.54,115.16 5 1
+multiwayMS/producer/producer.go:109.54,115.16 4 1
 multiwayMS/producer/producer.go:118.2,118.18 1 1
 multiwayMS/producer/producer.go:115.16,116.13 1 0
 multiwayMS/producer/producer.go:121.88,124.2 2 0

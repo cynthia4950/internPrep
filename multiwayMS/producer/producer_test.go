@@ -7,8 +7,8 @@ import (
 	// "github.com/adjust/rmq/v3"
 	. "github.com/smartystreets/goconvey/convey"
 	"encoding/json"
-	// "multiwayMS/mock"
-	// "github.com/golang/mock/gomock"
+	"multiwayMS/mock"
+	"github.com/golang/mock/gomock"
 )
 
 //mockgen -source=./producer/producer.go -destination=./mock/producer_mock.go -package=mock
@@ -64,7 +64,7 @@ func Test_OpenConnAndQueue_Send(t *testing.T){
 
 
 
-/*
+
 func Test_main(t *testing.T) {
 	//involve connection
 	ctl := gomock.NewController(t)
@@ -81,7 +81,7 @@ func Test_main(t *testing.T) {
 	
 	main()
 }
-*/
+
 
 
 
