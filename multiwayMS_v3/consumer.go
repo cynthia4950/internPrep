@@ -13,7 +13,8 @@ import (
     "github.com/gomodule/redigo/redis"
 )
 
-func consumer(m *sync.Mutex) error {
+func consumer(wg *sync.WaitGroup, m *sync.Mutex) error {
+	defer wg.Done()
 	fmt.Println("in consumer()")
 
     redis_conn, err := redis.Dial("tcp", ":6379")

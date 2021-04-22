@@ -6,7 +6,7 @@ import (
     // "time"
     "strconv"
 	"strings"
-	// "sync"
+	"sync"
     // "math/rand"
 	"os"
     "github.com/gomodule/redigo/redis"
@@ -16,7 +16,8 @@ import (
 // const RMQ string = "mqtest"
 
 
-func producer(fileIndex int) error {
+func producer(wg *sync.WaitGroup, fileIndex int) error {
+	defer wg.Done()
 	fmt.Println("in producer()")
 
     redis_conn, err := redis.Dial("tcp", ":6379")
@@ -31,16 +32,14 @@ func producer(fileIndex int) error {
 
 	q := &Queue{queueName: "demoQueue"}
 
-
-	// for i := 0; i < numFiles; i++ {
-		//创建被传输的内容，10w个未排序好的有序数为一组：
+	//创建被传输的内容，10w个未排序好的有序数为一组：
 	fmt.Println("call readFileAndSend()")
 	err = readFileAndSend(fileIndex, q, redis_conn)
 	if err != nil{
 		fmt.Println(err)
 		return err
 	}
-	// }
+
 
 	return nil
 }

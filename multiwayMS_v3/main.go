@@ -25,12 +25,20 @@ func main() {
 	os.Mkdir("data/output", 0755)
 
 	var mutexConsumer sync.Mutex
+	var wg1 sync.WaitGroup
+	var wg2 sync.WaitGroup
+
 	for i := 1; i < numFiles; i++{
 		fmt.Println("create one producer")
-    	producer(i)
+		wg1.Add(1)
+    	go producer(&wg1, i)
 	}
+	wg1.Wait()
+
 	for j := 0; j < numConsumer; j++{
 		fmt.Println("create one consumer")
-    	consumer(&mutexConsumer)
+		wg2.Add(1)
+    	go consumer(&wg2, &mutexConsumer)
 	}
+	wg2.Wait()
 }
