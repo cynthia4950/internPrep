@@ -1,3 +1,2 @@
-Please run under the directory multiwayMS, as the I use relative directory to input test data.<br>
-For producer, run producer/producer.go<br>
-For consumer, run consumer/consumer.go
+Please run "go run *.go" under the directory multiwayMS_v3, as the I use relative directory to input test data.<br>
+
