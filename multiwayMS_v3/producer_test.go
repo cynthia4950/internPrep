@@ -4,10 +4,10 @@ import (
 	"reflect"
 	"sync"
 	"testing"
-	// "math"
-	"github.com/gomodule/redigo/redis"
+
 	. "github.com/agiledragon/gomonkey"
-    . "github.com/smartystreets/goconvey/convey"
+	"github.com/gomodule/redigo/redis"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func Test_produce(t *testing.T) {
@@ -25,7 +25,6 @@ func Test_produce(t *testing.T) {
 	})
 }
 
-
 func Test_readFileAndSend(t *testing.T) {
 	var mock_q QueueHandler = &mockQueue{queueName: "mockQueue"}
 	var dummyConn redis.Conn
@@ -40,7 +39,7 @@ func Test_readFileAndSend(t *testing.T) {
 		wantErr bool
 	}{
 		// TODO: Add test cases.
-		{"readFileAndSend",args{0,mock_q,dummyConn},false},
+		{"readFileAndSend", args{0, mock_q, dummyConn}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -50,8 +49,6 @@ func Test_readFileAndSend(t *testing.T) {
 		})
 	}
 }
-
-
 
 func Test_handleAppend_full(t *testing.T) {
 	var mock_q QueueHandler = &mockQueue{queueName: "mockQueue"}
@@ -71,7 +68,6 @@ func Test_handleAppend_full(t *testing.T) {
 	}{
 		// TODO: Add test cases.
 		{"test_append_full", args{nums_arr: fullArr, num: 1, q: mock_q, connect: dummyConn}, expectArr},
-
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -82,12 +78,11 @@ func Test_handleAppend_full(t *testing.T) {
 	}
 }
 
-
 func Test_handleAppend_normal(t *testing.T) {
 	var mock_q QueueHandler = &mockQueue{queueName: "mockQueue"}
 	var dummyConn redis.Conn
-	originArr := []int{1,2,3,4}
-	expectArr := []int{1,2,3,4,5}
+	originArr := []int{1, 2, 3, 4}
+	expectArr := []int{1, 2, 3, 4, 5}
 	type args struct {
 		nums_arr []int
 		num      int
@@ -101,7 +96,6 @@ func Test_handleAppend_normal(t *testing.T) {
 	}{
 		// TODO: Add test cases.
 		{"test_append_full", args{nums_arr: originArr, num: 5, q: mock_q, connect: dummyConn}, expectArr},
-
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

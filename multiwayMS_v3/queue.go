@@ -13,7 +13,6 @@ type QueueHandler interface {
 	Connect() redis.Conn
 	Delivery(msg Message, connection redis.Conn) error
 	Retrieve(redis.Conn) (interface{}, error)
-	// Retrieve(redis.Conn) ([]byte, error)
 	GetQueueName() string
 }
 
@@ -26,19 +25,11 @@ type mockQueue struct {
 	queueName string
 }
 
-type mockQueue2 struct {
-	//mock for non-empty redis message queue
-	queueName string
-}
-
 func (q *Queue) GetQueueName() string {
 	return q.queueName
 }
 
 func (q *mockQueue) GetQueueName() string {
-	return q.queueName
-}
-func (q *mockQueue2) GetQueueName() string {
 	return q.queueName
 }
 
@@ -55,16 +46,12 @@ func (q *mockQueue) Connect() redis.Conn {
 	var dummyConn redis.Conn
 	return dummyConn
 }
-func (q *mockQueue2) Connect() redis.Conn {
-	var dummyConn redis.Conn
-	return dummyConn
-}
 
 //传输内容进队列：
 // With Delivery, producers will send msg into the queue
 func (q *Queue) Delivery(msg Message, connection redis.Conn) error {
 	// defer connection.Close()
-	fmt.Println("call q.Delivery()")
+	// fmt.Println("call q.Delivery()")
 	msgBytes, err := json.Marshal(msg)
 	if err != nil {
 		return err
@@ -75,22 +62,12 @@ func (q *Queue) Delivery(msg Message, connection redis.Conn) error {
 		if err != nil {
 			return err
 		}
-		fmt.Println("LPUSH success in q.Delivery")
+		// fmt.Println("LPUSH success in q.Delivery")
 	}
 	return nil
 }
 
 func (q *mockQueue) Delivery(msg Message, connection redis.Conn) error {
-	// defer connection.Close()
-	fmt.Println("call q.Delivery()")
-	_, err := json.Marshal(msg)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (q *mockQueue2) Delivery(msg Message, connection redis.Conn) error {
 	// defer connection.Close()
 	fmt.Println("call q.Delivery()")
 	_, err := json.Marshal(msg)
@@ -116,11 +93,4 @@ func (q *mockQueue) Retrieve(redis_conn redis.Conn) (interface{}, error) {
 	// item_fake, err := json.Marshal(dummy_msg)
 	// return item_fake,err
 	return nil, nil
-}
-
-func (q *mockQueue2) Retrieve(redis_conn redis.Conn) (interface{}, error) {
-	dummy_msg := Message{queueName: "dummy", Content: []int{0, 1, 2, 3, 4}}
-	item_fake, err := json.Marshal(dummy_msg)
-	return item_fake, err
-	// return nil, nil
 }

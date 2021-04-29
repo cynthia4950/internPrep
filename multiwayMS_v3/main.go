@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	numFiles       int    = 11
+	numFiles       int    = 11 // numFiles-1 = 实际需文件数
 	numConsumer    int    = 2
 	rmqName        string = "demoQueue"
 	numSortedFiles int    = 0
@@ -25,10 +25,10 @@ var (
 func testFilesGenerator() bool {
 	// generate test files
 	errorOccurs := false
-	for j := 1; j < 11; j++ {
+	for j := 1; j < numFiles; j++ {
 		rand.Seed(time.Now().UnixNano())
 		fileName := "data/data" + strconv.Itoa(j) + ".txt"
-		fmt.Println(fileName)
+		// fmt.Println(fileName)
 		f, err := os.Create(fileName)
 
 		if err != nil {
@@ -42,8 +42,9 @@ func testFilesGenerator() bool {
 			fmt.Fprintf(f, "%d\n", r)
 		}
 
-		fmt.Println("done")
+		// fmt.Println("done")
 	}
+	fmt.Printf("%v data files generated\n", numFiles-1)
 	return errorOccurs
 }
 
@@ -52,7 +53,8 @@ func main() {
 	// var mutexProducer sync.Mutex
 
 	// Generate data files
-	// testFilesGenerator()
+	fmt.Println("Generate data files")
+	testFilesGenerator()
 
 	//清理data/sorted 和 data/output底下的文件
 	os.RemoveAll("data/sorted")
@@ -68,7 +70,7 @@ func main() {
 	var wg2 sync.WaitGroup
 
 	for i := 1; i < numFiles; i++ {
-		fmt.Println("create one producer")
+		fmt.Println("create producer ", i)
 		wg1.Add(1)
 		go produce(&wg1, i)
 	}
@@ -76,9 +78,10 @@ func main() {
 
 	var q QueueHandler = &Queue{queueName: "demoQueue"}
 	for j := 0; j < numConsumer; j++ {
-		fmt.Println("create one consumer")
+		fmt.Println("create one consumer ", j)
 		wg2.Add(1)
 		go consume(&wg2, &mutexConsumer, q)
 	}
 	wg2.Wait()
+	fmt.Println("Sort Complete!")
 }
