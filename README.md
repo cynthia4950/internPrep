@@ -1,3 +1,4 @@
+**内容在multiwayMS_v3** v2是试验品
 运行：<br>
 在multiwayMS_v3下：<br>
 go run !(*_test).go <br>
