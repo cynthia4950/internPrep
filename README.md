@@ -1,2 +1,7 @@
-Please run "go run *.go" under the directory multiwayMS_v3, as the I use relative directory to input test data.<br>
+运行：<br>
+在multiwayMS_v3下：<br>
+go run !(*_test).go <br>
 
+生成覆盖率文件：<br>
+内联会使测试产生问题 因此使用：-v -gcflags=-l<br>
+go test -v -gcflags=-l -coverprofile=coverage.out<br>
