@@ -16,11 +16,6 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-/*
-内联会使测试产生问题 因此使用：-v -gcflags=-l
-go test -v -gcflags=-l -coverprofile=coverage.out
-*/
-
 func Test_writeToFile(t *testing.T) {
 	num_in := 7
 	fileHandler_in, _ := os.Create("data/data1.txt")
@@ -68,7 +63,6 @@ func Test_writeToFile(t *testing.T) {
 	}
 }
 
-//checked
 func Test_mergeSort(t *testing.T) {
 	type args struct {
 		arr *[]int

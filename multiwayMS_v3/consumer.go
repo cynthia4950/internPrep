@@ -12,14 +12,22 @@ import (
 	"sync"
 )
 
+/*
+消费过程，
+使用WaitGroup让main等待消费者全部消费完才结束进程
+使用mutex使得多个消费者不会同时产生名字一样的sorted文件
+所有与消息队列有关的链接、消息发出以及消息接收用QueueHandler interface因为这个作业采用了两种测试方法
+*/
 func consume(wg *sync.WaitGroup, m *sync.Mutex, q QueueHandler) error {
 	defer wg.Done()
 
+	//链接： if statement是为区别测试时的mock queue， mock queue不用关闭连接
 	redis_conn := q.Connect()
 	if q.GetQueueName() != "mockQueue" {
 		defer redis_conn.Close()
 	}
 
+	//从队列里接受信息直到接受不到东西为止，当队列为空时，item == nil
 	for {
 		item, err := q.Retrieve(redis_conn)
 		if err != nil {
@@ -31,12 +39,14 @@ func consume(wg *sync.WaitGroup, m *sync.Mutex, q QueueHandler) error {
 				mergeFiles()
 				return nil
 			}
+
+			//当队列不为空时，可以从队列中得到一个不为空的item，取出item的内容，进行初步排序并放入sorted文件
+			//每个item会有自己对应的sorted文件
 			itemUint8, ok := item.([]uint8)
 			if !ok {
 				fmt.Println("!ok: cannot assert reply as type []uint8")
 				return errors.New("cannot assert reply as type []uint8")
 			}
-
 			var msg Message
 			err = json.Unmarshal(itemUint8, &msg)
 			// err = json.Unmarshal(item, &msg)
@@ -44,23 +54,21 @@ func consume(wg *sync.WaitGroup, m *sync.Mutex, q QueueHandler) error {
 				fmt.Println(err)
 				return err
 			}
-			// fmt.Println("call mergeSort()")
-			msgContent := msg.Content
-			// fmt.Println("size of arr before merge sort: " + strconv.Itoa(len(msgContent)))
-			mergeSort(&msgContent, 0, len(msgContent)-1)
-			// fmt.Println("size of arr after merge sort: " + strconv.Itoa(len(msgContent)))
 
+			//合并排序：
+			msgContent := msg.Content
+			mergeSort(&msgContent, 0, len(msgContent)-1)
+
+			//使用mutex产生正确的sorted文件名
 			//use mutex to avoid race condition in numSortedFiles
 			//output to file called: data/sorted/sorted+numSortedFile+.txt
 			m.Lock()
 			outputHandle := outputSorted()
 			m.Unlock()
+			defer outputHandle.Close()
 
-			if err == nil {
-				defer outputHandle.Close()
-			}
+			//把item里的数字逐个写到sorted文件里
 			for j := 0; j < len(msgContent); j++ {
-				// _, err := outputHandle.WriteString(fmt.Sprintf("%d\n", msgContent[j]))
 				err = writeToFile(outputHandle, msgContent[j])
 				if err != nil {
 					fmt.Println(err)
@@ -86,11 +94,17 @@ func outputSorted() *os.File {
 	return outputHandle
 }
 
+/*
+将指定int写入指定文件
+*/
 func writeToFile(fileHandler *os.File, num int) error {
 	_, err := fileHandler.WriteString(fmt.Sprintf("%d\n", num))
 	return err
 }
 
+/*
+合并排序，使用递归与合并merge（）
+*/
 func mergeSort(arr *[]int, l int, r int) {
 	if l < r {
 		m := (l + (r - 1)) / 2
@@ -101,6 +115,7 @@ func mergeSort(arr *[]int, l int, r int) {
 	}
 }
 
+/*合并*/
 func merge(arr *[]int, l int, m int, r int) {
 	n1 := m - l + 1
 	n2 := r - m
@@ -149,28 +164,34 @@ func merge(arr *[]int, l int, m int, r int) {
 	}
 }
 
+/*
+当队列为空时，把已经排序好的小文件们合并成大文件
+*/
 func mergeFiles() {
+	//数有多少个sorted文件，将结果储存在numSortedFiles
 	sortedFiles, _ := ioutil.ReadDir("data/sorted")
 	numSortedFiles := len(sortedFiles)
 
-	// fmt.Println("in mergeFiles(), numSortedFile is: " + strconv.Itoa(numSortedFiles))
-	//for output file:
+	//创建最终结果所要保存在的文件
 	outputHandle, err := os.Create("data/output/output.txt")
 	if err == nil {
 		defer outputHandle.Close()
 	}
+
+	//将file scanner储存在scannerArr数组里以方便未来的Scan（）
 	scannerArr := make([]*bufio.Scanner, numSortedFiles)
+	//将file handler储存在handlerArr数组里方便未来关闭文件
 	handlerArr := make([]*os.File, numSortedFiles)
-	//create "numSortedFiles" file scanner
+
+	//对每个sorted file，创建scanner
 	for i := 0; i < numSortedFiles; i++ {
 		scannerArr, handlerArr = createScanner(i, scannerArr, handlerArr)
 	}
-	// fmt.Println("mergeFiles: before for loop, numSortedFiles: " + strconv.Itoa(numSortedFiles))
 
-	//first iteration, scan first num for all sorted files
+	//workingArr作为每个数组里最小数字的暂存点
 	workingArr := make([]int, numSortedFiles) //store the number we are working with in each file
 
-	// var fileScanner *bufio.Scanner
+	//first iteration, scan first num for all sorted files
 	var read_line string
 	var num int
 	for j := 0; j < numSortedFiles; j++ {
@@ -178,32 +199,22 @@ func mergeFiles() {
 		read_line = scannerArr[j].Text()
 		read_line = strings.TrimSuffix(read_line, "\n")
 		num, _ = strconv.Atoi(read_line)
-		// fmt.Println("j: ", j)
-		// fmt.Println("文件指针对应的数字: ", num)
 		workingArr[j] = num
 	}
 
-	lastMin := 0
-	tempMin := workingArr[0]
+	lastMin := 0             //最小数字所在的文件的数字
+	tempMin := workingArr[0] //目前最小的数字
 
-	for k := 0; k < numSortedFiles; k++ {
-		num_working := workingArr[k]
-		if tempMin > num_working {
-			tempMin = num_working //目前最小的数字
-			lastMin = k           //最小数字所在的文件的数字
-		}
-	}
+	tempMin, lastMin = findMinAndArr(tempMin, workingArr, numSortedFiles)
 
-	// fmt.Println("1:目前最小数字: ", tempMin)
-	// fmt.Println("1:目前最小数字的来源：", lastMin)
-
+	//将第一个最小数写入最终生成文件
 	_, err = outputHandle.WriteString(fmt.Sprintf("%d\n", tempMin))
 	if err != nil {
 		fmt.Println(err)
 	}
 
+	//每个循环只扫描上一次产生最小数的文件，将新扫描出来的数放入workingArr，再比较workingArr里数的大小以找出下一次循环中需要扫描的文件
 	for {
-		// fmt.Println("从文件i扫描下一个数： ", lastMin)
 		scanResult := scannerArr[lastMin].Scan()
 		if scanResult {
 			// read_line = fileScanner.Text()
@@ -215,18 +226,12 @@ func mergeFiles() {
 			//all nums in this file has been processed
 			workingArr[lastMin] = intMax
 		}
+
 		tempMin := intMax
-		for k := 0; k < numSortedFiles; k++ {
-			num_working := workingArr[k]
-			if tempMin > num_working {
-				tempMin = num_working
-				lastMin = k
-			}
-		}
 
-		// fmt.Println("目前最小数字：", tempMin)
-		// fmt.Println("目前最小数字的来源：", lastMin)
+		tempMin, lastMin = findMinAndArr(tempMin, workingArr, numSortedFiles)
 
+		//当找到的最小数字仍然是intMax时，所有文件中的数已经被扫描
 		if tempMin == intMax {
 			//close all files
 			for i := 0; i < numSortedFiles; i++ {
@@ -234,17 +239,19 @@ func mergeFiles() {
 			}
 			return
 		}
-		//output this tempMin to output file,
+
+		//output this tempMin to output file
 		_, err := outputHandle.WriteString(fmt.Sprintf("%d\n", tempMin))
 		if err != nil {
 			fmt.Println(err)
 		}
 
 	}
-	//scan each file line by line and compare
-
 }
 
+/*
+对每一个sorted文件创建一个scanner，避免所有数都在内存中导致内存溢出
+*/
 func createScanner(i int, fileScanner_Arr []*bufio.Scanner, fileHandler_Arr []*os.File) ([]*bufio.Scanner, []*os.File) {
 	// fmt.Println("create scanner for file with index: ", i)
 	fileName := "data/sorted/sorted" + strconv.Itoa(i) + ".txt"
@@ -256,4 +263,20 @@ func createScanner(i int, fileScanner_Arr []*bufio.Scanner, fileHandler_Arr []*o
 	fileScanner_Arr[i] = fs
 	fileHandler_Arr[i] = fh
 	return fileScanner_Arr, fileHandler_Arr
+}
+
+/*
+找出一个数组中最小的数字以及它的index
+==找出最小数字和最小数字所在文件的index
+*/
+func findMinAndArr(tempMin int, workingArr []int, n int) (int, int) {
+	var lastMin int
+	for k := 0; k < n; k++ {
+		num_working := workingArr[k]
+		if tempMin > num_working {
+			tempMin = num_working
+			lastMin = k
+		}
+	}
+	return tempMin, lastMin
 }

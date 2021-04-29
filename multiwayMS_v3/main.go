@@ -14,14 +14,14 @@ import (
 )
 
 var (
-	numFiles       int    = 11 // numFiles-1 = 实际需文件数
-	numConsumer    int    = 2
-	rmqName        string = "demoQueue"
-	numSortedFiles int    = 0
-	intMax         int    = 2147483647
-	batchSize             = 25000
+	numFiles    int    = 11 // numFiles-1 = 实际需文件数
+	numConsumer int    = 2
+	rmqName     string = "demoQueue"
+	intMax      int    = 2147483647
+	batchSize          = 25000
 )
 
+// Generate data files
 func testFilesGenerator() bool {
 	// generate test files
 	errorOccurs := false
@@ -52,7 +52,6 @@ func main() {
 	// list := os.Args
 	// var mutexProducer sync.Mutex
 
-	// Generate data files
 	fmt.Println("Generate data files")
 	testFilesGenerator()
 
